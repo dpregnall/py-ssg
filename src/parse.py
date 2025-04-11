@@ -94,3 +94,37 @@ def text_to_textnodes(text):
     nodes = split_nodes_link(nodes)
 
     return nodes
+
+def markdown_to_blocks(markdown):
+    """
+    Splits markdown text into blocks based on double newlines,
+    cleaning whitespace and removing empty lines within blocks.
+
+    Args:
+        markdown: The input markdown string.
+
+    Returns:
+        A list of cleaned markdown blocks.
+    """
+    if not isinstance(markdown, str):
+        # Handle non-string input gracefully
+        return []
+        # Or raise TypeError("Input must be a string")
+
+    # 1. Split the markdown into potential blocks based on double newlines
+    potential_blocks = markdown.split("\n\n")
+
+    cleaned_blocks = []
+    for block in potential_blocks:
+        # 2. For each potential block:
+        #    a. Split it into lines.
+        #    b. Strip whitespace from each line.
+        #    c. Keep only non-empty lines after stripping.
+        cleaned_lines = [line.strip() for line in block.split('\n') if line.strip()]
+
+        # 3. If there are any non-empty lines left after cleaning...
+        if cleaned_lines:
+            # ...join them back together with single newlines and add to the result.
+            cleaned_blocks.append("\n".join(cleaned_lines))
+
+    return cleaned_blocks
