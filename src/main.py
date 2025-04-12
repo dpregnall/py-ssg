@@ -1,4 +1,4 @@
-from textnode import TextNode, TextType
+from src.textnode import TextNode, TextType
 
 def main():
     test_node = TextNode("Here's an anchor", TextType.LINK, "https://www.google.com")

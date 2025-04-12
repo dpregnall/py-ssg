@@ -1,14 +1,15 @@
-import unittest
+import unittest, textwrap
 
-from textnode import TextNode, TextType
-from parse import (
+from src.textnode import TextNode, TextType
+from src.parse import (
     split_nodes_delimiter, 
     extract_markdown_images, 
     extract_markdown_links, 
     split_nodes_image, 
     split_nodes_link, 
     text_to_textnodes, 
-    markdown_to_blocks
+    markdown_to_blocks,
+    markdown_to_html_node
 )
 
 class TestParse(unittest.TestCase):
@@ -171,6 +172,8 @@ class TestParse(unittest.TestCase):
         - This is a list
         - with items
         """
+        md = textwrap.dedent(md).strip()
+
         blocks = markdown_to_blocks(md)
         self.assertEqual(
             blocks,
@@ -179,6 +182,218 @@ class TestParse(unittest.TestCase):
                 "This is another paragraph with _italic_ text and `code` here\nThis is the same paragraph on a new line",
                 "- This is a list\n- with items",
             ],
+        )
+
+    def test_h1(self):
+        md = """
+        # Heading 1
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h1>Heading 1</h1></div>",
+        )
+
+    def test_h2(self):
+        md = """
+        ## Heading 2
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h2>Heading 2</h2></div>",
+        )
+    
+    def test_h3(self):
+        md = """
+        ### Heading 3
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h3>Heading 3</h3></div>",
+        )
+
+    def test_h4(self):
+        md = """
+        #### Heading 4
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h4>Heading 4</h4></div>",
+        )
+
+    def test_h5(self):
+        md = """
+        ##### Heading 5
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h5>Heading 5</h5></div>",
+        )
+
+    def test_h6(self):
+        md = """
+        ###### Heading 6
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h6>Heading 6</h6></div>",
+        )
+
+    def test_single_line_blockquote(self):
+        md = """
+        > Single line quote
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><blockquote>Single line quote</blockquote></div>",
+        )
+    
+    def test_multi_line_blockquote(self):
+        md = """
+        > This
+        > is
+        > a
+        > multiline
+        > quote
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><blockquote>This\nis\na\nmultiline\nquote</blockquote></div>",
+        )
+
+    def test_ul(self):
+        md = """
+        - This
+        - is
+        - an
+        - unordered
+        - list
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ul><li>This</li><li>is</li><li>an</li><li>unordered</li><li>list</li></ul></div>",
+        )
+
+    def test_fancy_ul(self):
+        md = """
+        - This
+        - is
+        - an
+        - unordered
+        - list with **bold** items
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ul><li>This</li><li>is</li><li>an</li><li>unordered</li><li>list with <b>bold</b> items</li></ul></div>",
+        )
+    
+    def test_ol(self):
+        md = """
+        1. This
+        2. is
+        3. an
+        4. ordered list
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><ol><li>This</li><li>is</li><li>an</li><li>ordered list</li></ol></div>",
+        )
+
+    def test_paragraphs(self):
+        md = """
+        This is **bolded** paragraph
+        text in a p
+        tag here
+
+        This is another paragraph with _italic_ text and `code` here
+
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
+        )
+
+    def test_codeblock(self):
+        md = """
+        ```
+        This is text that _should_ remain
+        the **same** even with inline stuff
+        ```
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff</code></pre></div>",
+        )
+    
+    def test_header_and_paragraphs(self):
+        md = """
+        # A heading!
+        
+        This is **bolded** paragraph
+        text in a p
+        tag here
+
+        This is another paragraph with _italic_ text and `code` here
+
+        """
+        md = textwrap.dedent(md).strip()
+
+        node = markdown_to_html_node(md)
+        html = node.to_html()
+        self.assertEqual(
+            html,
+            "<div><h1>A heading!</h1><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
         )
 
 if __name__ == "__main__":

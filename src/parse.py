@@ -1,6 +1,9 @@
 import re
 
-from textnode import TextNode, TextType
+from src.parentnode import ParentNode
+from src.textnode import TextNode, TextType
+from src.leafnode import LeafNode
+from src.blocks import BlockType, block_to_block_type
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
@@ -107,11 +110,8 @@ def markdown_to_blocks(markdown):
         A list of cleaned markdown blocks.
     """
     if not isinstance(markdown, str):
-        # Handle non-string input gracefully
         return []
-        # Or raise TypeError("Input must be a string")
 
-    # 1. Split the markdown into potential blocks based on double newlines
     potential_blocks = markdown.split("\n\n")
 
     cleaned_blocks = []
@@ -128,3 +128,77 @@ def markdown_to_blocks(markdown):
             cleaned_blocks.append("\n".join(cleaned_lines))
 
     return cleaned_blocks
+
+def markdown_to_html_node(md):
+    children_nodes = []
+
+    blocks = markdown_to_blocks(md)
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        
+        if block_type == BlockType.HEADING.value:
+            children_nodes.append(convert_md_header_to_html(block))
+        if block_type == BlockType.QUOTE.value:
+            children_nodes.append(convert_md_blockquote_to_html(block))
+        if block_type == BlockType.UNORDERED_LIST.value:
+            children_nodes.append(convert_md_unordered_list_to_html(block))
+        if block_type == BlockType.ORDERED_LIST.value:
+            children_nodes.append(convert_md_ordered_list_to_html(block))
+        if block_type == BlockType.CODE.value:
+            children_nodes.append(convert_md_code_block_to_html(block))
+        if block_type == BlockType.PARAGRAPH.value:
+            children_nodes.append(convert_md_paragraph_to_html(block))
+
+    return ParentNode("div", children_nodes, None)
+
+def convert_md_header_to_html(md):
+    split = md.split(' ', 1)
+    hash_count = len(split[0])
+    
+    return LeafNode(f"h{hash_count}", split[1], None)
+
+def convert_md_blockquote_to_html(md):
+    lines = md.split("\n")
+    new_lines = []
+    for line in lines:
+        clean_line = line.split(' ', 1)[1]
+        new_lines.append(clean_line)
+    
+    new_lines = "\n".join(new_lines)
+
+    return LeafNode("blockquote", new_lines, None)
+
+def convert_md_unordered_list_to_html(md):
+    lines = md.split("\n")
+    child_nodes = []
+    for line in lines:
+        clean_line = line.split(' ', 1)[1]
+        text_nodes = text_to_textnodes(clean_line)
+        child_nodes.append(ParentNode("li", text_nodes, None))
+    
+    return ParentNode("ul", child_nodes, None)
+
+def convert_md_ordered_list_to_html(md):
+    lines = md.split("\n")
+    child_nodes = []
+    for line in lines:
+        clean_line = line.split(' ', 1)[1]
+        text_nodes = text_to_textnodes(clean_line)
+        child_nodes.append(ParentNode("li", text_nodes, None))
+    
+    return ParentNode("ol", child_nodes, None)
+
+def convert_md_paragraph_to_html(md):
+    line = " ".join(md.split("\n"))
+    text_nodes = text_to_textnodes(line)
+
+    return ParentNode("p", text_nodes, None)
+
+def convert_md_code_block_to_html(md):
+    md = md.lstrip('```').rstrip('```')
+    lines = md.split("\n")
+    new_lines = [line for line in lines if line != ""]
+    new_lines = "\n".join(new_lines)
+    child_nodes = [LeafNode("code", new_lines, None)]
+
+    return ParentNode("pre", child_nodes, None)
