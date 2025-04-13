@@ -1,5 +1,5 @@
-from src.htmlnode import HTMLNode
-from src.textnode import TextNode, text_node_to_html_node
+from htmlnode import HTMLNode
+from textnode import TextNode, text_node_to_html_node
 
 class ParentNode(HTMLNode):
     def __init__(self, tag, children, props=None):

@@ -1,7 +1,39 @@
 import os, shutil
 
+from parse import markdown_to_html_node, extract_title
+
 def main():
     copy_static_resources()
+    generate_page("content/index.md", "template.html", "public/index.html")
+
+def generate_page(from_path, template_path, dest_path):
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}...")
+    
+    print("Extracting source markdown content...")
+    with open(from_path) as f:
+        source_md = f.read()
+    
+    print("Extracting html template...")
+    with open(template_path) as f:
+        template_html = f.read()
+
+    print("Converting source markdown to html...")
+    html_content = markdown_to_html_node(source_md).to_html()
+
+    print("Extracting page title from source markdown...")
+    html_title = extract_title(source_md)
+
+    print("Populating template with content...")
+    html = template_html.replace("{{ Title }}", html_title)
+    html = html.replace("{{ Content }}", html_content)
+
+    target_dir = os.path.dirname(dest_path)
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    with open(dest_path, 'w') as f:
+        f.write(html)
+        f.close()
 
 def copy_static_resources(src="static", dest="public"):
     """

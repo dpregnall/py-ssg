@@ -1,9 +1,9 @@
 import re
 
-from src.parentnode import ParentNode
-from src.textnode import TextNode, TextType
-from src.leafnode import LeafNode
-from src.blocks import BlockType, block_to_block_type
+from parentnode import ParentNode
+from textnode import TextNode, TextType
+from leafnode import LeafNode
+from blocks import BlockType, block_to_block_type
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
     new_nodes = []
@@ -161,7 +161,7 @@ def convert_md_blockquote_to_html(md):
     lines = md.split("\n")
     new_lines = []
     for line in lines:
-        clean_line = line.split(' ', 1)[1]
+        clean_line = line.split(' ', 1)[1] if len(line.split(' ')) != 1 else ""
         new_lines.append(clean_line)
     
     new_lines = "\n".join(new_lines)
@@ -202,3 +202,9 @@ def convert_md_code_block_to_html(md):
     child_nodes = [LeafNode("code", new_lines, None)]
 
     return ParentNode("pre", child_nodes, None)
+
+def extract_title(markdown):
+    lines = markdown.split("\n")
+    for line in lines:
+        if line.startswith("# "):
+            return line.split(" ", 1)[1].strip()

@@ -1,7 +1,7 @@
 import unittest, textwrap
 
-from src.textnode import TextNode, TextType
-from src.parse import (
+from textnode import TextNode, TextType
+from parse import (
     split_nodes_delimiter, 
     extract_markdown_images, 
     extract_markdown_links, 
@@ -9,7 +9,8 @@ from src.parse import (
     split_nodes_link, 
     text_to_textnodes, 
     markdown_to_blocks,
-    markdown_to_html_node
+    markdown_to_html_node,
+    extract_title
 )
 
 class TestParse(unittest.TestCase):
@@ -395,6 +396,23 @@ class TestParse(unittest.TestCase):
             html,
             "<div><h1>A heading!</h1><p>This is <b>bolded</b> paragraph text in a p tag here</p><p>This is another paragraph with <i>italic</i> text and <code>code</code> here</p></div>",
         )
+
+    def test_extract_header(self):
+        md = """
+        # A heading!
+        
+        This is **bolded** paragraph
+        text in a p
+        tag here
+
+        This is another paragraph with _italic_ text and `code` here
+
+        """
+        md = textwrap.dedent(md).strip()
+
+        title = extract_title(md)
+        target = "A heading!"
+        self.assertEqual(title, target)
 
 if __name__ == "__main__":
     unittest.main()
