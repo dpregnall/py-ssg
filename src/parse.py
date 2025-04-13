@@ -6,19 +6,54 @@ from leafnode import LeafNode
 from blocks import BlockType, block_to_block_type
 
 def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    """
+    Splits nodes based on a delimiter, handling multiple occurrences.
+
+    Args:
+        old_nodes: A list of TextNode objects.
+        delimiter: The string delimiter to split by (e.g., "**", "`").
+        text_type: The TextType to assign to the text *between* delimiters.
+
+    Returns:
+        A new list of TextNode objects, split appropriately.
+    """
     new_nodes = []
-
     for old_node in old_nodes:
-        split = old_node.text.split(delimiter)
+        # Only split nodes that are currently plain text
+        if old_node.text_type != TextType.TEXT.value:
+            new_nodes.append(old_node)
+            continue # Skip to the next node if it's not plain text
 
-        if len(split) == 1: new_nodes.append(old_node)
-        if len(split) == 3:
-            new_nodes.append(TextNode(split[0], TextType.TEXT))
-            new_nodes.append(TextNode(split[1],text_type))
-            new_nodes.append(TextNode(split[2], TextType.TEXT))
-        else: 
+        # Split the text by the delimiter
+        split_parts = old_node.text.split(delimiter)
+
+        # If the delimiter wasn't found, or if splitting resulted in just one
+        # (potentially empty) part, add the original node and continue
+        if len(split_parts) <= 1:
+            # Add the node only if it has text, otherwise discard empty nodes
+            if old_node.text:
+                new_nodes.append(old_node)
             continue
-    
+
+        # Check for invalid markdown (odd number of delimiters)
+        # len(split_parts) - 1 is the number of delimiters found.
+        # An odd number of delimiters means unclosed markdown.
+        if (len(split_parts) - 1) % 2 != 0:
+             raise ValueError(f"Invalid Markdown syntax: Unmatched delimiter '{delimiter}' in text '{old_node.text}'")
+
+        # Iterate through the split parts, alternating text types
+        for i, part in enumerate(split_parts):
+            # Skip empty parts which can occur with leading/trailing/consecutive delimiters
+            if not part:
+                continue
+
+            # Even indices are outside the delimiter (plain text)
+            if i % 2 == 0:
+                new_nodes.append(TextNode(part, TextType.TEXT))
+            # Odd indices are inside the delimiter (special text type)
+            else:
+                new_nodes.append(TextNode(part, text_type))
+
     return new_nodes
 
 def extract_markdown_images(text):

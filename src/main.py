@@ -4,7 +4,25 @@ from parse import markdown_to_html_node, extract_title
 
 def main():
     copy_static_resources()
-    generate_page("content/index.md", "template.html", "public/index.html")
+    generate_pages_recursive("content", "template.html", "public")
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    if not os.path.exists(dir_path_content):
+        raise ValueError(f"Source directory '{dir_path_content}' does not exist.")
+    if not os.path.isdir(dir_path_content):
+         raise ValueError(f"Source '{dir_path_content}' is not a directory.")
+    
+    for item in os.listdir(dir_path_content):
+        src_path = os.path.join(dir_path_content, item)
+        dest_path = os.path.join(dest_dir_path, item.replace(".md",".html"))
+
+        if os.path.isdir(src_path):
+            os.makedirs(dest_path, exist_ok=True)
+            generate_pages_recursive(src_path, template_path, dest_path)
+        elif os.path.isfile(src_path):
+            generate_page(src_path, template_path, dest_path)
+        else:
+            print(f"  Skipping item (not file or directory): {src_path}")
 
 def generate_page(from_path, template_path, dest_path):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}...")
