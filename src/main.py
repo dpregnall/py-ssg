@@ -1,12 +1,14 @@
-import os, shutil
+import os, shutil, sys
 
 from parse import markdown_to_html_node, extract_title
 
 def main():
-    copy_static_resources()
-    generate_pages_recursive("content", "template.html", "public")
+    basepath = sys.argv[1] if len(sys.argv) > 1 else "/"
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    copy_static_resources()
+    generate_pages_recursive(basepath, "content", "template.html", "docs")
+
+def generate_pages_recursive(basepath, dir_path_content, template_path, dest_dir_path):
     if not os.path.exists(dir_path_content):
         raise ValueError(f"Source directory '{dir_path_content}' does not exist.")
     if not os.path.isdir(dir_path_content):
@@ -18,13 +20,13 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
 
         if os.path.isdir(src_path):
             os.makedirs(dest_path, exist_ok=True)
-            generate_pages_recursive(src_path, template_path, dest_path)
+            generate_pages_recursive(basepath, src_path, template_path, dest_path)
         elif os.path.isfile(src_path):
-            generate_page(src_path, template_path, dest_path)
+            generate_page(basepath, src_path, template_path, dest_path)
         else:
             print(f"  Skipping item (not file or directory): {src_path}")
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(basepath, from_path, template_path, dest_path):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}...")
     
     print("Extracting source markdown content...")
@@ -44,6 +46,9 @@ def generate_page(from_path, template_path, dest_path):
     print("Populating template with content...")
     html = template_html.replace("{{ Title }}", html_title)
     html = html.replace("{{ Content }}", html_content)
+    if basepath != "/":
+        html = html.replace('href="/', f'href="{basepath}/')
+        html = html.replace('src="/', f'src="{basepath}/')
 
     target_dir = os.path.dirname(dest_path)
     if not os.path.exists(target_dir):
@@ -53,7 +58,7 @@ def generate_page(from_path, template_path, dest_path):
         f.write(html)
         f.close()
 
-def copy_static_resources(src="static", dest="public"):
+def copy_static_resources(src="static", dest="docs"):
     """
     Clears the destination directory and recursively copies files
     from the source directory to the destination directory.
